@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/megboard-pwa-2/sw.js', { scope: '/megboard-pwa-2/' })})}
