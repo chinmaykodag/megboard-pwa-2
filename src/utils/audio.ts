@@ -2,8 +2,7 @@ import type { AudioRecorderState } from '../types';
 
 export class AudioPlayer {
   private audioContext: AudioContext | null = null;
-  private currentSource: AudioBufferSourceNode | null = null;
-  private currentSound: string | null = null;
+  private playingSources: Map<string, AudioBufferSourceNode> = new Map();
 
   constructor() {
     // Initialize AudioContext lazily to avoid autoplay policy issues
@@ -23,8 +22,8 @@ export class AudioPlayer {
 
   async playSound(audioBlob: Blob, soundId: string): Promise<void> {
     try {
-      // Stop any currently playing sound
-      this.stopSound();
+      // Stop any currently playing instance of this specific sound
+      this.stopSound(soundId);
       
       const audioContext = await this.getAudioContext();
       const arrayBuffer = await audioBlob.arrayBuffer();
@@ -34,18 +33,15 @@ export class AudioPlayer {
       source.buffer = audioBuffer;
       source.connect(audioContext.destination);
       
-      this.currentSource = source;
-      this.currentSound = soundId;
+      // Track this playing source
+      this.playingSources.set(soundId, source);
       
       // Play the sound
       source.start(0);
       
       // Clean up when finished
       source.onended = () => {
-        if (this.currentSound === soundId) {
-          this.currentSound = null;
-          this.currentSource = null;
-        }
+        this.playingSources.delete(soundId);
       };
     } catch (error) {
       console.error('Error playing sound:', error);
@@ -53,27 +49,46 @@ export class AudioPlayer {
     }
   }
 
-  stopSound(): void {
-    if (this.currentSource) {
-      try {
-        this.currentSource.stop();
-      } catch (error) {
-        // Ignore errors when stopping (might already be stopped)
+  stopSound(soundId?: string): void {
+    if (soundId) {
+      // Stop a specific sound
+      const source = this.playingSources.get(soundId);
+      if (source) {
+        try {
+          source.stop();
+        } catch (error) {
+          // Ignore errors when stopping (might already be stopped)
+        }
+        this.playingSources.delete(soundId);
       }
-      this.currentSource = null;
-      this.currentSound = null;
+    } else {
+      // Stop all sounds
+      for (const [, source] of this.playingSources) {
+        try {
+          source.stop();
+        } catch (error) {
+          // Ignore errors when stopping (might already be stopped)
+        }
+      }
+      this.playingSources.clear();
     }
   }
 
   isPlaying(soundId?: string): boolean {
     if (soundId) {
-      return this.currentSound === soundId;
+      return this.playingSources.has(soundId);
     }
-    return this.currentSound !== null;
+    return this.playingSources.size > 0;
   }
 
   getCurrentlyPlayingSound(): string | null {
-    return this.currentSound;
+    // For backward compatibility, return the first playing sound or null
+    const playingSounds = Array.from(this.playingSources.keys());
+    return playingSounds.length > 0 ? playingSounds[0] : null;
+  }
+
+  getCurrentlyPlayingSounds(): string[] {
+    return Array.from(this.playingSources.keys());
   }
 
   async getAudioDuration(audioBlob: Blob): Promise<number> {

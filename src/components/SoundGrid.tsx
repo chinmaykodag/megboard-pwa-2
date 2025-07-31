@@ -4,7 +4,7 @@ import type { Sound } from '../types';
 
 interface SoundGridProps {
   soundSlots: (Sound | null)[];
-  currentlyPlayingSound: string | null;
+  currentlyPlayingSound: string[];
   isRecording: boolean;
   recordingSlotId: string | null;
   recordingTime: number;
@@ -54,7 +54,7 @@ export function SoundGrid({
                 onStartRecording={onStartRecording}
                 onStopRecording={onStopRecording}
                 onCancelRecording={onCancelRecording}
-                isPlaying={currentlyPlayingSound === `slot-${index}`}
+                isPlaying={sound ? currentlyPlayingSound.includes(sound.id) : false}
                 isRecording={isRecording && recordingSlotId === `slot-${index}`}
                 recordingTime={recordingTime}
               />

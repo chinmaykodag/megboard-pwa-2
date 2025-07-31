@@ -10,7 +10,7 @@ import * as Toast from '@radix-ui/react-toast';
 
 function App() {
   const [sounds, setSounds] = useState<Sound[]>([]);
-  const [currentlyPlayingSound, setCurrentlyPlayingSound] = useState<string | null>(null);
+  const [currentlyPlayingSounds, setCurrentlyPlayingSounds] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSlotId, setRecordingSlotId] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -170,30 +170,29 @@ function App() {
 
   const handlePlaySound = async (sound: Sound) => {
     try {
-      // Stop any currently playing sound
-      if (currentlyPlayingSound) {
-        audioPlayer.stopSound();
-        setCurrentlyPlayingSound(null);
-      }
-
-      // If clicking the same sound that was playing, just stop
-      if (currentlyPlayingSound === sound.id) {
+      // Check if this sound is already playing
+      const isAlreadyPlaying = currentlyPlayingSounds.includes(sound.id);
+      
+      if (isAlreadyPlaying) {
+        // Stop this specific sound if it's already playing
+        audioPlayer.stopSound(sound.id);
+        setCurrentlyPlayingSounds(prev => prev.filter(id => id !== sound.id));
         return;
       }
 
-      setCurrentlyPlayingSound(sound.id);
+      // Add this sound to the currently playing list
+      setCurrentlyPlayingSounds(prev => [...prev, sound.id]);
       await audioPlayer.playSound(sound.audioBlob, sound.id);
 
-      // Auto-clear the playing state when sound ends
-      // This is handled in the audio player's onended callback
+      // Auto-remove from playing list when sound ends
       setTimeout(() => {
-        if (audioPlayer.getCurrentlyPlayingSound() === null) {
-          setCurrentlyPlayingSound(null);
+        if (!audioPlayer.isPlaying(sound.id)) {
+          setCurrentlyPlayingSounds(prev => prev.filter(id => id !== sound.id));
         }
       }, (sound.duration || 5) * 1000);
     } catch (error) {
       console.error('Error playing sound:', error);
-      setCurrentlyPlayingSound(null);
+      setCurrentlyPlayingSounds(prev => prev.filter(id => id !== sound.id));
       showToastMessage('Failed to play sound');
     }
   };
@@ -214,9 +213,9 @@ function App() {
   const handleDeleteSound = async (id: string) => {
     try {
       // Stop playing if this sound is currently playing
-      if (currentlyPlayingSound === id) {
-        audioPlayer.stopSound();
-        setCurrentlyPlayingSound(null);
+      if (currentlyPlayingSounds.includes(id)) {
+        audioPlayer.stopSound(id);
+        setCurrentlyPlayingSounds(prev => prev.filter(soundId => soundId !== id));
       }
 
       await soundStorage.deleteSound(id);
@@ -254,7 +253,7 @@ function App() {
         <main className="min-h-[calc(100vh-80px)]">
           <SoundGrid
             soundSlots={soundSlots}
-            currentlyPlayingSound={currentlyPlayingSound}
+            currentlyPlayingSound={currentlyPlayingSounds}
             isRecording={isRecording}
             recordingSlotId={recordingSlotId}
             recordingTime={recordingTime}
