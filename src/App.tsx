@@ -182,14 +182,12 @@ function App() {
 
       // Add this sound to the currently playing list
       setCurrentlyPlayingSounds(prev => [...prev, sound.id]);
-      await audioPlayer.playSound(sound.audioBlob, sound.id);
+      
+      // Play with looping enabled by default
+      await audioPlayer.playSound(sound.audioBlob, sound.id, true);
 
-      // Auto-remove from playing list when sound ends
-      setTimeout(() => {
-        if (!audioPlayer.isPlaying(sound.id)) {
-          setCurrentlyPlayingSounds(prev => prev.filter(id => id !== sound.id));
-        }
-      }, (sound.duration || 5) * 1000);
+      // Note: We don't auto-remove from playing list since it's looping
+      // The sound will only be removed when explicitly stopped
     } catch (error) {
       console.error('Error playing sound:', error);
       setCurrentlyPlayingSounds(prev => prev.filter(id => id !== sound.id));
@@ -217,6 +215,9 @@ function App() {
         audioPlayer.stopSound(id);
         setCurrentlyPlayingSounds(prev => prev.filter(soundId => soundId !== id));
       }
+
+      // Clear cached audio buffer
+      audioPlayer.clearAudioBuffer(id);
 
       await soundStorage.deleteSound(id);
       setSounds(prev => prev.filter(sound => sound.id !== id));

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  DotsHorizontalIcon, 
   TrashIcon, 
   Pencil1Icon, 
   SpeakerLoudIcon, 
@@ -9,7 +8,6 @@ import {
   StopIcon,
   Cross1Icon
 } from '@radix-ui/react-icons';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { SoundButtonProps } from '../types';
 import { confettiEffects } from '../utils/confetti';
 
@@ -28,13 +26,64 @@ export function SoundButton({
 }: SoundButtonProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(sound?.name || '');
+  const [showLongPressMenu, setShowLongPressMenu] = useState(false);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressActiveRef = useRef(false);
 
   const handlePlay = () => {
     if (sound) {
       onPlay(sound);
-      confettiEffects.playSound();
+      if (!isPlaying) {
+        confettiEffects.playSound();
+      }
     }
   };
+
+  const startLongPress = useCallback(() => {
+    if (!sound || longPressActiveRef.current) return;
+    
+    longPressActiveRef.current = true;
+    setIsLongPressing(true);
+    longPressTimerRef.current = window.setTimeout(() => {
+      if (longPressActiveRef.current) {
+        setShowLongPressMenu(true);
+        setIsLongPressing(false);
+      }
+    }, 600); // Increased to 600ms for more stability
+  }, [sound]);
+
+  const cancelLongPress = useCallback(() => {
+    longPressActiveRef.current = false;
+    setIsLongPressing(false);
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  // Handle pointer events for better cross-platform support
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault(); // Prevent text selection and other default behaviors
+    startLongPress();
+  }, [startLongPress]);
+
+  const handlePointerUp = useCallback(() => {
+    const wasLongPress = longPressActiveRef.current && longPressTimerRef.current === null;
+    cancelLongPress();
+    
+    // If it wasn't a long press, trigger the click
+    if (!wasLongPress && !showLongPressMenu) {
+      handlePlay();
+    }
+  }, [cancelLongPress, showLongPressMenu, handlePlay]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cancelLongPress();
+    };
+  }, [cancelLongPress]);
 
   const handleRename = () => {
     if (sound && editName.trim() && editName !== sound.name) {
@@ -184,32 +233,32 @@ export function SoundButton({
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
       className="relative group"
     >
       <motion.button
-        onClick={handlePlay}
-        disabled={isPlaying}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={cancelLongPress}
         className={`
           w-full h-24 rounded-2xl border-2 overflow-hidden relative
-          transition-all duration-200 font-comic text-sm font-bold
-          ${isPlaying 
-            ? 'bg-gradient-to-br from-neon-pink via-neon-purple to-neon-blue border-neon-yellow animate-pulse' 
-            : 'bg-gradient-to-br from-dark-bg to-darker-bg border-neon-pink hover:border-neon-blue'
+          transition-all duration-200 font-comic text-sm font-bold cursor-pointer
+          ${isLongPressing 
+            ? 'bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 border-purple-400 scale-95' 
+            : isPlaying 
+              ? 'bg-gradient-to-br from-neon-pink via-neon-purple to-neon-blue border-neon-yellow animate-pulse' 
+              : 'bg-gradient-to-br from-dark-bg to-darker-bg border-neon-pink hover:border-neon-blue'
           }
           shadow-lg hover:shadow-xl hover:shadow-neon-pink/20
-          disabled:cursor-not-allowed
+          select-none touch-manipulation
         `}
         whileHover={{ 
           boxShadow: '0 0 20px rgba(255, 0, 128, 0.4)' 
         }}
         animate={isPlaying ? { 
-          scale: [1, 1.02, 1],
-          rotate: [0, 1, -1, 0],
+          scale: [1, 1.01, 1],
         } : {}}
         transition={{ 
-          duration: 0.5, 
+          duration: 1, 
           repeat: isPlaying ? Infinity : 0,
           repeatType: 'reverse'
         }}
@@ -219,14 +268,43 @@ export function SoundButton({
         
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col items-center justify-center p-3 text-white">
-          {isPlaying && (
+          {isLongPressing && (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-2 right-2"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="absolute inset-0 flex items-center justify-center bg-purple-900/20 backdrop-blur-sm rounded-2xl"
             >
-              <SpeakerLoudIcon className="w-4 h-4 text-neon-yellow" />
+              <div className="text-center">
+                <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-white text-xs font-bold">Hold to edit...</p>
+              </div>
             </motion.div>
+          )}
+          
+          {isPlaying && !isLongPressing && (
+            <>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-2 right-2"
+              >
+                <SpeakerLoudIcon className="w-4 h-4 text-neon-yellow" />
+              </motion.div>
+              
+              {/* Loop indicator */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-2 left-2 flex items-center gap-1 bg-neon-blue/80 backdrop-blur-sm rounded-full px-2 py-1"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="w-3 h-3 border-2 border-white border-t-transparent rounded-full"
+                />
+                <span className="text-xs font-bold text-white">LOOP</span>
+              </motion.div>
+            </>
           )}
           
           <div className="text-center">
@@ -251,6 +329,18 @@ export function SoundButton({
             {sound.duration && (
               <p className="text-neon-blue text-xs opacity-80">
                 {formatDuration(sound.duration)}
+              </p>
+            )}
+            
+            {isPlaying && (
+              <p className="text-neon-yellow text-xs opacity-60 mt-1">
+                Tap to stop
+              </p>
+            )}
+            
+            {!isPlaying && (
+              <p className="text-neon-pink/60 text-xs opacity-60 mt-1">
+                Hold to edit
               </p>
             )}
           </div>
@@ -285,55 +375,80 @@ export function SoundButton({
         )}
       </motion.button>
 
-      {/* Options menu */}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute top-2 left-2 p-1 rounded-full bg-dark-bg/80 backdrop-blur-sm border border-neon-pink/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20"
+      {/* Long press options menu */}
+      {showLongPressMenu && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setShowLongPressMenu(false)}
+        >
+          <motion.div
+            initial={{ y: 20 }}
+            animate={{ y: 0 }}
+            className="bg-darker-bg/95 backdrop-blur-md rounded-2xl border border-neon-pink/50 p-6 mx-4 min-w-[280px] shadow-xl shadow-neon-pink/20"
             onClick={(e) => e.stopPropagation()}
           >
-            <DotsHorizontalIcon className="w-4 h-4 text-neon-pink" />
-          </motion.button>
-        </DropdownMenu.Trigger>
+            <h3 className="text-white font-bold text-lg mb-4 text-center font-comic">
+              {sound.name}
+            </h3>
+            
+            <div className="space-y-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-white rounded-xl bg-neon-blue/20 hover:bg-neon-blue/30 border border-neon-blue/50 transition-all"
+                onClick={() => {
+                  setIsEditing(true);
+                  setShowLongPressMenu(false);
+                }}
+              >
+                <Pencil1Icon className="w-5 h-5 text-neon-blue" />
+                <span className="font-comic font-bold">Rename</span>
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-white rounded-xl bg-neon-purple/20 hover:bg-neon-purple/30 border border-neon-purple/50 transition-all"
+                onClick={() => {
+                  onStartRecording(slotIndex);
+                  setShowLongPressMenu(false);
+                }}
+              >
+                <VideoIcon className="w-5 h-5 text-neon-purple" />
+                <span className="font-comic font-bold">Re-record</span>
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-300 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 transition-all"
+                onClick={() => {
+                  onDelete(sound.id);
+                  setShowLongPressMenu(false);
+                  confettiEffects.deleteSound();
+                }}
+              >
+                <TrashIcon className="w-5 h-5 text-red-400" />
+                <span className="font-comic font-bold">Clear slot</span>
+              </motion.button>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full mt-4 px-4 py-2 text-sm text-white/70 rounded-xl bg-dark-bg/50 hover:bg-dark-bg/70 border border-white/20 transition-all font-comic"
+              onClick={() => setShowLongPressMenu(false)}
+            >
+              Cancel
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      )}
 
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            className="min-w-[180px] bg-darker-bg/95 backdrop-blur-md rounded-xl border border-neon-pink/50 p-2 shadow-xl shadow-neon-pink/20 z-50"
-            sideOffset={5}
-          >
-            <DropdownMenu.Item
-              className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg hover:bg-neon-blue/20 hover:text-neon-blue cursor-pointer outline-none"
-              onSelect={() => setIsEditing(true)}
-            >
-              <Pencil1Icon className="w-4 h-4" />
-              Rename
-            </DropdownMenu.Item>
-            
-            <DropdownMenu.Item
-              className="flex items-center gap-2 px-3 py-2 text-sm text-neon-purple rounded-lg hover:bg-neon-purple/20 hover:text-neon-purple cursor-pointer outline-none"
-              onSelect={() => onStartRecording(slotIndex)}
-            >
-              <VideoIcon className="w-4 h-4" />
-              Re-record
-            </DropdownMenu.Item>
-            
-            <DropdownMenu.Separator className="h-px bg-neon-pink/20 my-1" />
-            
-            <DropdownMenu.Item
-              className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 rounded-lg hover:bg-red-500/20 hover:text-red-300 cursor-pointer outline-none"
-              onSelect={() => {
-                onDelete(sound.id);
-                confettiEffects.deleteSound();
-              }}
-            >
-              <TrashIcon className="w-4 h-4" />
-              Clear slot
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+      {/* Old dropdown menu - remove this entire section */}
     </motion.div>
   );
 }

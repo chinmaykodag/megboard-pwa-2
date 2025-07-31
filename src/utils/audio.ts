@@ -3,6 +3,8 @@ import type { AudioRecorderState } from '../types';
 export class AudioPlayer {
   private audioContext: AudioContext | null = null;
   private playingSources: Map<string, AudioBufferSourceNode> = new Map();
+  private loopingSounds: Set<string> = new Set();
+  private audioBuffers: Map<string, AudioBuffer> = new Map();
 
   constructor() {
     // Initialize AudioContext lazily to avoid autoplay policy issues
@@ -20,38 +22,63 @@ export class AudioPlayer {
     return this.audioContext;
   }
 
-  async playSound(audioBlob: Blob, soundId: string): Promise<void> {
+  async playSound(audioBlob: Blob, soundId: string, loop: boolean = true): Promise<void> {
     try {
       // Stop any currently playing instance of this specific sound
       this.stopSound(soundId);
       
       const audioContext = await this.getAudioContext();
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       
-      const source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
+      // Cache the audio buffer for efficient looping
+      let audioBuffer = this.audioBuffers.get(soundId);
+      if (!audioBuffer) {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        this.audioBuffers.set(soundId, audioBuffer);
+      }
       
-      // Track this playing source
-      this.playingSources.set(soundId, source);
+      if (loop) {
+        this.loopingSounds.add(soundId);
+      }
       
-      // Play the sound
-      source.start(0);
-      
-      // Clean up when finished
-      source.onended = () => {
-        this.playingSources.delete(soundId);
-      };
+      this.startPlayback(audioBuffer, soundId, audioContext);
     } catch (error) {
       console.error('Error playing sound:', error);
       throw new Error('Failed to play sound');
     }
   }
 
+  private startPlayback(audioBuffer: AudioBuffer, soundId: string, audioContext: AudioContext): void {
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+    
+    // Track this playing source
+    this.playingSources.set(soundId, source);
+    
+    // Set up loop handling
+    source.onended = () => {
+      this.playingSources.delete(soundId);
+      
+      // If this sound should loop and we haven't manually stopped it, restart
+      if (this.loopingSounds.has(soundId)) {
+        // Small delay to prevent audio glitches
+        setTimeout(() => {
+          if (this.loopingSounds.has(soundId)) {
+            this.startPlayback(audioBuffer, soundId, audioContext);
+          }
+        }, 10);
+      }
+    };
+    
+    // Play the sound
+    source.start(0);
+  }
+
   stopSound(soundId?: string): void {
     if (soundId) {
       // Stop a specific sound
+      this.loopingSounds.delete(soundId);
       const source = this.playingSources.get(soundId);
       if (source) {
         try {
@@ -63,6 +90,7 @@ export class AudioPlayer {
       }
     } else {
       // Stop all sounds
+      this.loopingSounds.clear();
       for (const [, source] of this.playingSources) {
         try {
           source.stop();
@@ -89,6 +117,10 @@ export class AudioPlayer {
 
   getCurrentlyPlayingSounds(): string[] {
     return Array.from(this.playingSources.keys());
+  }
+
+  clearAudioBuffer(soundId: string): void {
+    this.audioBuffers.delete(soundId);
   }
 
   async getAudioDuration(audioBlob: Blob): Promise<number> {
