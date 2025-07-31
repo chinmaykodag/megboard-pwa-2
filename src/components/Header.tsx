@@ -31,9 +31,13 @@ export function Header({ soundCount, storageUsed }: HeaderProps) {
                 repeat: Infinity,
                 repeatType: 'reverse'
               }}
-              className="text-3xl"
+              className="w-8 h-8"
             >
-              📢
+              <img 
+                src="/rat-icon.svg" 
+                alt="MegBoard Rat" 
+                className="w-full h-full"
+              />
             </motion.div>
             <div>
               <h1 className="text-2xl font-lucky bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue bg-clip-text text-transparent">
