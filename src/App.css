@@ -1,0 +1,74 @@
+/* Additional utility classes for MegBoard */
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* Custom backdrop blur for older browsers */
+@supports not (backdrop-filter: blur(8px)) {
+  .backdrop-blur-sm {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  .backdrop-blur-md {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* Smooth focus transitions */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #00ffff;
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for webkit browsers */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ff0080 #1a1a2e;
+}
+
+/* Loading animation */
+@keyframes pulse-neon {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(255, 0, 128, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 30px rgba(255, 0, 128, 0.8);
+  }
+}
+
+.animate-pulse-neon {
+  animation: pulse-neon 2s ease-in-out infinite;
+}
+
+/* Safe area insets for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Text selection styling */
+::selection {
+  background-color: rgba(255, 0, 128, 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: rgba(255, 0, 128, 0.3);
+  color: white;
+}
