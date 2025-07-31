@@ -9,7 +9,6 @@ import {
   Cross1Icon
 } from '@radix-ui/react-icons';
 import type { SoundButtonProps } from '../types';
-import { confettiEffects } from '../utils/confetti';
 
 export function SoundButton({ 
   sound, 
@@ -34,9 +33,6 @@ export function SoundButton({
   const handlePlay = () => {
     if (sound) {
       onPlay(sound);
-      if (!isPlaying) {
-        confettiEffects.playSound();
-      }
     }
   };
 
@@ -290,20 +286,6 @@ export function SoundButton({
               >
                 <SpeakerLoudIcon className="w-4 h-4 text-neon-yellow" />
               </motion.div>
-              
-              {/* Loop indicator */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-2 left-2 flex items-center gap-1 bg-neon-blue/80 backdrop-blur-sm rounded-full px-2 py-1"
-              >
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  className="w-3 h-3 border-2 border-white border-t-transparent rounded-full"
-                />
-                <span className="text-xs font-bold text-white">LOOP</span>
-              </motion.div>
             </>
           )}
           
@@ -428,7 +410,6 @@ export function SoundButton({
                 onClick={() => {
                   onDelete(sound.id);
                   setShowLongPressMenu(false);
-                  confettiEffects.deleteSound();
                 }}
               >
                 <TrashIcon className="w-5 h-5 text-red-400" />
