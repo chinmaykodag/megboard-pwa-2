@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="ratGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff0080;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00bfff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rat body -->
+  <ellipse cx="50" cy="65" rx="28" ry="20" fill="url(#ratGradient)" stroke="#fff" stroke-width="2"/>
+  
+  <!-- Rat head -->
+  <ellipse cx="50" cy="40" rx="22" ry="18" fill="url(#ratGradient)" stroke="#fff" stroke-width="2"/>
+  
+  <!-- Ears -->
+  <ellipse cx="35" cy="28" rx="8" ry="12" fill="url(#ratGradient)" stroke="#fff" stroke-width="1.5" transform="rotate(-20 35 28)"/>
+  <ellipse cx="65" cy="28" rx="8" ry="12" fill="url(#ratGradient)" stroke="#fff" stroke-width="1.5" transform="rotate(20 65 28)"/>
+  
+  <!-- Inner ears -->
+  <ellipse cx="37" cy="30" rx="4" ry="6" fill="#ff69b4" transform="rotate(-20 37 30)"/>
+  <ellipse cx="63" cy="30" rx="4" ry="6" fill="#ff69b4" transform="rotate(20 63 30)"/>
+  
+  <!-- Eyes -->
+  <circle cx="42" cy="38" r="5" fill="#fff"/>
+  <circle cx="58" cy="38" r="5" fill="#fff"/>
+  <circle cx="42" cy="38" r="3" fill="#000"/>
+  <circle cx="58" cy="38" r="3" fill="#000"/>
+  
+  <!-- Eye sparkles -->
+  <circle cx="43" cy="36" r="1" fill="#fff"/>
+  <circle cx="59" cy="36" r="1" fill="#fff"/>
+  
+  <!-- Nose -->
+  <ellipse cx="50" cy="48" rx="3" ry="2" fill="#ff1493"/>
+  
+  <!-- Mouth -->
+  <path d="M 46 52 Q 50 56 54 52" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Whiskers -->
+  <line x1="25" y1="45" x2="38" y2="47" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="25" y1="50" x2="38" y2="50" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="62" y1="47" x2="75" y2="45" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="62" y1="50" x2="75" y2="50" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Tail -->
+  <path d="M 75 70 Q 85 65 90 75 Q 88 85 82 82 Q 78 78 75 75" fill="url(#ratGradient)" stroke="#fff" stroke-width="1.5"/>
+  
+  <!-- Paws -->
+  <ellipse cx="35" cy="78" rx="6" ry="4" fill="url(#ratGradient)" stroke="#fff" stroke-width="1"/>
+  <ellipse cx="65" cy="78" rx="6" ry="4" fill="url(#ratGradient)" stroke="#fff" stroke-width="1"/>
+  
+  <!-- Sound waves (to represent soundboard) -->
+  <path d="M 15 35 Q 20 30 15 25" stroke="#00ff88" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 10 40 Q 18 32 10 24" stroke="#00ff88" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M 85 35 Q 80 30 85 25" stroke="#00ff88" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 90 40 Q 82 32 90 24" stroke="#00ff88" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>
