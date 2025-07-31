@@ -43,6 +43,9 @@ export function Header({ soundCount, storageUsed }: HeaderProps) {
               <h1 className="text-2xl font-lucky bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue bg-clip-text text-transparent">
                 MegBoard
               </h1>
+              <p className="text-xs font-comic text-white/50 italic -mt-1">
+                for when meg is bored.
+              </p>
             </div>
           </motion.div>
 

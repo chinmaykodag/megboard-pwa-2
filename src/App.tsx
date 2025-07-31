@@ -123,7 +123,8 @@ function App() {
     
     try {
       const audioBlob = await audioRecorder.stopRecording();
-      await handleSaveSound(`Sound ${recordingSlotId.split('-')[1]}`, audioBlob, recordingSlotId);
+      const slotNumber = parseInt(recordingSlotId.split('-')[1]) + 1;
+      await handleSaveSound(`Sound ${slotNumber}`, audioBlob, recordingSlotId);
       setIsRecording(false);
       setRecordingSlotId(null);
     } catch (error) {
