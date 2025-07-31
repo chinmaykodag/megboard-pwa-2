@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/megboard-pwa-2/', // Add this line for GitHub Pages
   plugins: [
     react(),
     VitePWA({
@@ -16,8 +17,8 @@ export default defineConfig({
         theme_color: '#ff0080',
         background_color: '#1a1a2e',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/megboard-pwa-2/', // Update this too
+        start_url: '/megboard-pwa-2/', // Update this too
         icons: [
           {
             src: 'pwa-192x192.png',
