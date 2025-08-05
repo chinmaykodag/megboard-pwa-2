@@ -34,7 +34,7 @@ export function Header({ soundCount, storageUsed }: HeaderProps) {
               className="w-8 h-8"
             >
               <img 
-                src="/rat-icon.svg" 
+                src="/megboard-pwa-2/rat-icon.svg" 
                 alt="MegBoard Rat" 
                 className="w-full h-full"
               />
